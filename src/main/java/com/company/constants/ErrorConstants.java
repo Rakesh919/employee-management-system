@@ -16,5 +16,12 @@ public class ErrorConstants {
     public static final ErrorResponse TOKEN_IS_REQUIRED = new ErrorResponse("Invalid or Missing Token","BAD-400");
     public static final ErrorResponse PASSWORD_IS_REQUIRED = new ErrorResponse("Password is Required","BAD-400");
     public static final ErrorResponse NO_RECORD_FOUND_FOR_EMAIL = new ErrorResponse("No Record Found For this Email","NOT-404");
-    public static final ErrorResponse PASSWORD_DO_NOT_MATCH = new ErrorResponse("Password do not match for this Email","NOT-404");
+    public static final ErrorResponse PASSWORD_DO_NOT_MATCH = new ErrorResponse("Password do not match for this Email","BAD-404");
+    public static final ErrorResponse NOT_ALLOWED_TO_ACCESS = new ErrorResponse("Not Allowed to use this service","UAT-401");
+    public static final ErrorResponse USERNAME_ALREADY_EXISTS = new ErrorResponse("username already exists, Please try a different one","BAD-400");
+    public static final ErrorResponse DETAILS_NOT_FOUND = new ErrorResponse("Details Not Found","NOT-404");
+    public static final ErrorResponse VALID_ID = new ErrorResponse("Please Enter a Valid ID", "BAD-400");
+    public static final ErrorResponse LEAVE_DETAILS_NOT_FOUND = new ErrorResponse("Leave Details not found","NOT-404");
+    public static final ErrorResponse TYPE_IS_REQUIRED = new ErrorResponse("Type is Required","BAD-400");
+    public static final ErrorResponse LEAVE_TYPE_ALREADY_EXISTS = new ErrorResponse("Leave type already Exists","BAD-400");
 }

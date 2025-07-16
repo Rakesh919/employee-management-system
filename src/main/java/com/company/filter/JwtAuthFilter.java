@@ -1,9 +1,11 @@
 package com.company.filter;
 
 import com.company.constants.ErrorConstants;
-//import com.company.entity.user.User;
-//import com.company.service.user.UserService;
+import com.company.entity.user.JwtUserDetails;
+import com.company.entity.user.User;
+import com.company.service.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -11,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,7 +21,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import io.jsonwebtoken.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,15 +31,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Value("${jwt.secret}")
     private String secretKey;
 
-//    private final UserService userService;
-//
-//    public JwtAuthFilter(UserService userService) {
-//        this.userService = userService;
-//    }
+    @Autowired
+    private UserService userService;
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthFilter.class);
 
-    private final List<String> excludedPaths = List.of("/auth/login","/auth/signup-otp", "/auth/register", "/public","/swagger-ui/index.html","/v3/api-docs","/");
+    private final List<String> excludedPaths = List.of(
+            "/auth/login", "/auth/signup-otp", "/auth/register",
+            "/swagger-ui", "/swagger-ui/", "/swagger-ui/index.html", "/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/", "/swagger-resources"
+    );
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
@@ -46,15 +48,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
 
-//        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.getWriter().write("Missing or invalid Authorization header");
-//            return;
-//        }
+        String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             sendJsonError(response);
@@ -69,26 +67,40 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            String username = claims.getSubject(); // You passed it during token generation
+            String username = claims.getSubject(); // e.g. email or name
+            Integer userId = claims.get("userId", Integer.class);
+            String role = claims.get("role", String.class);
 
-            int id = Integer.parseInt(username);
+            if (userId == null || role == null || username == null) {
+                logger.error("Missing required claims in JWT");
+                sendJsonError(response);
+                return;
+            }
 
-//            User isExists = userService.getUser(id);
-//            if(isExists==null){
-//                logger.error("User Details not found for this ID: {}",id);
-//                sendJsonError(response,ErrorConstants.USER_NOT_FOUND);
-//            }
+            // Optional DB check (skip if already validated during login)
+            User user = userService.getUser(userId);
+            if (user == null) {
+                logger.error("User not found: {}", userId);
+                sendJsonError(response);
+                return;
+            }
 
-            // Optional: Add roles if you put them in token
+            // Create custom principal
+            JwtUserDetails jwtUserDetails = new JwtUserDetails(userId, role, username);
+
+            // Set authentication in SecurityContext
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(username, null, List.of(new SimpleGrantedAuthority("USER")));
+                    new UsernamePasswordAuthenticationToken(
+                            jwtUserDetails,
+                            null,
+                            List.of(new SimpleGrantedAuthority(role))
+                    );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (JwtException e) {
+            logger.error("JWT validation error: {}", e.getMessage());
             sendJsonError(response);
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.getWriter().write("Invalid JWT token: " + e.getMessage());
             return;
         }
 

@@ -16,18 +16,31 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
     @Override
     public boolean isValid(String password, ConstraintValidatorContext context) {
         if (password == null || password.length() < 6) {
+            setMessage(context, "Password must be at least 6 characters long");
             return false;
         }
 
         if (COMMON_PASSWORDS.contains(password.toLowerCase())) {
+            setMessage(context, "Password is too common");
             return false;
         }
 
         boolean hasUppercase = password.chars().anyMatch(Character::isUpperCase);
         boolean hasLowercase = password.chars().anyMatch(Character::isLowerCase);
         boolean hasDigit = password.chars().anyMatch(Character::isDigit);
-        Pattern specialCharPattern = Pattern.compile(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
-        boolean hasSpecial = specialCharPattern.matcher(password).matches();
-        return hasUppercase && hasLowercase && hasDigit && hasSpecial;
+        boolean hasSpecial = Pattern.compile(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*").matcher(password).matches();
+
+        if (!(hasUppercase && hasLowercase && hasDigit && hasSpecial)) {
+            setMessage(context, "Password must contain uppercase, lowercase, digit, and special character");
+            return false;
+        }
+
+        return true;
     }
+
+    private void setMessage(ConstraintValidatorContext context, String message) {
+        context.disableDefaultConstraintViolation();
+        context.buildConstraintViolationWithTemplate(message).addConstraintViolation();
+    }
+
 }

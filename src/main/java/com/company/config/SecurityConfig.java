@@ -33,7 +33,7 @@ public class SecurityConfig {
                     .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                     .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for development; enable for production
                     .authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/auth/**","/swagger-ui/index.html","/v3/api-docs","/").permitAll()
+                            .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
                             .anyRequest().authenticated()
                     )
                     .addFilterBefore(jwtAuthFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)

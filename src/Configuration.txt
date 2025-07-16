@@ -36,3 +36,8 @@ jwt.expiration= EXPIRATION_TIME_IN_SECONDS
 
 #otp length
 random.number.digits=6
+
+#Admin Username & Password
+app.default-admin.username=admin
+app.default-admin.password=admin123
+

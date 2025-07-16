@@ -32,9 +32,10 @@ public class JwtUtil {
 
 
     // Generate JWT Token
-    public String generateToken(String username, String email) {
+    public String generateToken(String username, int id, String role) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("email",email);
+        claims.put("userId",id);
+        claims.put("role",role);
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date())
@@ -53,23 +54,31 @@ public class JwtUtil {
         return parser.parseSignedClaims(token).getPayload();
     }
 
+
+    public String extractUsername(String token) {
+        JwtParser parser = Jwts.parser()
+                .verifyWith(key)
+                .build();
+
+        return parser.parseSignedClaims(token).getPayload().getSubject();
+    }
+
     public int extractUserId(String token) {
         JwtParser parser = Jwts.parser()
                 .verifyWith(key)
                 .build();
 
         Claims claims = parser.parseSignedClaims(token).getPayload();
-        String userIdStr = claims.getSubject(); // subject = userId as String
-        return Integer.parseInt(userIdStr);     // convert to int
+        return claims.get("userId", Integer.class);
     }
 
-    public String extractEmail(String token) {
+    public String extractUserRole(String token) {
         JwtParser parser = Jwts.parser()
                 .verifyWith(key)
                 .build();
 
         Claims claims = parser.parseSignedClaims(token).getPayload();
-        return claims.get("email", String.class);
+        return claims.get("role", String.class);
     }
 
 }

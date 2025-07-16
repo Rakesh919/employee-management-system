@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class sampleController {
 
     @GetMapping("/")
-    public String sample(){
-        return "Hello from Spring boot";
+    public String sample() {
+        return "<html><body><h1>Hello from Spring Boot</h1></body></html>";
     }
 }
